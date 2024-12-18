@@ -60,8 +60,8 @@ ToggleAimbotButton.MouseButton1Click:Connect(function()
     _G.AimbotEnabled = not _G.AimbotEnabled
 end)
 
--- ESP Drawing Function for Skeleton
-local function DrawSkeleton(player)
+-- ESP Drawing Function
+local function DrawESPBox(player)
     -- Ensure player has a character and humanoid
     if player.Character and player.Character:FindFirstChild("Humanoid") then
         local humanoid = player.Character.Humanoid
@@ -92,24 +92,44 @@ local function DrawSkeleton(player)
                     table.insert(screenPositions, Camera:WorldToViewportPoint(pos))
                 end
 
-                -- Draw lines between key parts to form a skeleton
-                local function DrawLine(from, to)
-                    local line = Drawing.new("Line")
-                    line.From = from
-                    line.To = to
-                    line.Color = Color3.fromRGB(0, 255, 0) -- Skeleton color (green)
-                    line.Thickness = 2
-                    line.Visible = true
+                -- Calculate the top-left and bottom-right corners of the bounding box
+                local topLeft = Vector2.new(math.huge, math.huge)
+                local bottomRight = Vector2.new(-math.huge, -math.huge)
+
+                -- Find the extreme points (top-left, bottom-right)
+                for _, sp in ipairs(screenPositions) do
+                    topLeft = Vector2.new(math.min(topLeft.X, sp.X), math.min(topLeft.Y, sp.Y))
+                    bottomRight = Vector2.new(math.max(bottomRight.X, sp.X), math.max(bottomRight.Y, sp.Y))
                 end
 
-                -- Draw the body skeleton (lines connecting various parts)
-                DrawLine(screenPositions[2], screenPositions[1]) -- Head to HumanoidRootPart
-                DrawLine(screenPositions[1], screenPositions[3]) -- HumanoidRootPart to Left Leg
-                DrawLine(screenPositions[1], screenPositions[4]) -- HumanoidRootPart to Right Leg
-                DrawLine(screenPositions[1], screenPositions[5]) -- HumanoidRootPart to Left Arm
-                DrawLine(screenPositions[1], screenPositions[6]) -- HumanoidRootPart to Right Arm
-                DrawLine(screenPositions[5], screenPositions[6]) -- Left Arm to Right Arm
-                DrawLine(screenPositions[3], screenPositions[4]) -- Left Leg to Right Leg
+                -- Draw the ESP Box (box will form a rectangle around the character)
+                local box = Drawing.new("Line")
+                box.From = topLeft
+                box.To = Vector2.new(topLeft.X, bottomRight.Y)
+                box.Color = _G.ESPBoxColor
+                box.Thickness = _G.ESPBoxThickness
+                box.Visible = _G.ESPEnabled
+
+                local box2 = Drawing.new("Line")
+                box2.From = Vector2.new(topLeft.X, bottomRight.Y)
+                box2.To = Vector2.new(bottomRight.X, bottomRight.Y)
+                box2.Color = _G.ESPBoxColor
+                box2.Thickness = _G.ESPBoxThickness
+                box2.Visible = _G.ESPEnabled
+
+                local box3 = Drawing.new("Line")
+                box3.From = Vector2.new(bottomRight.X, bottomRight.Y)
+                box3.To = Vector2.new(bottomRight.X, topLeft.Y)
+                box3.Color = _G.ESPBoxColor
+                box3.Thickness = _G.ESPBoxThickness
+                box3.Visible = _G.ESPEnabled
+
+                local box4 = Drawing.new("Line")
+                box4.From = Vector2.new(bottomRight.X, topLeft.Y)
+                box4.To = topLeft
+                box4.Color = _G.ESPBoxColor
+                box4.Thickness = _G.ESPBoxThickness
+                box4.Visible = _G.ESPEnabled
             end
         end
     end
@@ -184,7 +204,7 @@ RunService.RenderStepped:Connect(function()
     if _G.ESPEnabled then
         for _, player in ipairs(Players:GetPlayers()) do
             if player ~= LocalPlayer then
-                DrawSkeleton(player)
+                DrawESPBox(player)
             end
         end
     end
